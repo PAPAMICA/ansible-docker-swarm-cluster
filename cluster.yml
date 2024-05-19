@@ -4,6 +4,7 @@
     - name: Leave cluster
       shell: docker swarm leave --force
       register: swarm_leave
+      ignore_errors: yes
 
     - name: Initialize Docker Swarm on master
       shell: docker swarm init
@@ -34,6 +35,7 @@
       shell: docker swarm leave --force
       register: swarm_leave
       when: inventory_hostname != groups['masters'][0]
+      ignore_errors: yes
 
     - name: Join manager nodes to swarm
       shell: docker swarm join --token {{ hostvars[groups['masters'][0]].master_join_token }} {{ hostvars[groups['masters'][0]]['ansible_host'] }}:2377

@@ -2,8 +2,7 @@
 
   tasks:
     - name: Get docker group id
-      shell: "getent group docker | cut -d':' -f3"
-      register: docker_gid_raw
+      command: rsync -a ./ ./ 
 
     - name: set join command
       set_fact:
