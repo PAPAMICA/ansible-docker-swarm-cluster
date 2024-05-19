@@ -1,9 +1,19 @@
 - hosts: "{{ groups['masters'][0] }}"
 
   tasks:
+    - name: Assurer que tous les répertoires du chemin /_data/apps/traefik existent
+      ansible.builtin.file:
+        path: /_data/apps/traefik
+        state: directory
+        mode: '0775'
+        recurse: yes
+      become: yes
 
-    - name: Copy traefik dir
-      command: rsync -a ./ ./ 
+    - name: Copier le fichier docker-compose.yml vers le répertoire de traefik
+      ansible.builtin.copy:
+        src: ./docker-compose.yml
+        dest: /_data/apps/traefik/docker-compose.yml
+      become: yes
 
     - name: Create hashed password
       shell: 'openssl passwd -apr1 {{ traefik_password }}'
@@ -16,18 +26,14 @@
     - name: Add traefik label for main node
       shell: 'docker node update --label-add traefik-public.traefik-public-certificates=true {{ main_node }}'
 
-    - name: Create traefik network
-      shell: 'docker network create --driver=overlay traefik-public > create_traefik_network.txt'
-      args:
-        chdir: $HOME
-        creates: create_traefik_network.txt
+    - name: Créer le réseau traefik
+      shell: 'docker network create -d overlay traefik-public'
 
-    - name: Deploy traefik
-      shell: 'docker stack deploy -c traefik/docker-compose.yml traefik'
+    - name: Déployer traefik
+      shell: 'docker stack deploy -c /_data/apps/traefik/docker-compose.yml traefik --with-registry-auth'
       environment:
-        - USERNAME: '{{ traefik_username }}'
-        - HASHED_PASSWORD: '{{ hashed_password }}'
-        - EMAIL: '{{ traefik_email }}'
-        - DOMAIN: '{{ traefik_domain }}'
-      args:
-        chdir: $HOME
+        USERNAME: '{{ traefik_username }}'
+        HASHED_PASSWORD: '{{ hashed_password }}'
+        EMAIL: '{{ traefik_email }}'
+        DOMAIN: '{{ traefik_domain }}'
+ 

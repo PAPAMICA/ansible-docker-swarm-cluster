@@ -1,17 +1,27 @@
 - hosts: "{{ groups['masters'][0] }}"
 
   tasks:
+    - name: Assurer que tous les répertoires du chemin /_data/apps/jenkins existent
+      ansible.builtin.file:
+        path: /_data/apps/jenkins
+        state: directory
+        mode: '0775'
+        recurse: yes
+      become: yes
+
+    - name: Copier le fichier docker-compose.yml vers le répertoire de jenkins
+      ansible.builtin.copy:
+        src: ./docker-compose.yml
+        dest: /_data/apps/jenkins/docker-compose.yml
+      become: yes
+
     - name: Get docker group id
-      command: rsync -a ./ ./ 
+      shell: "getent group docker | cut -d':' -f3"
+      register: docker_gid_raw
 
     - name: set join command
       set_fact:
         docker_gid: '{{ docker_gid_raw.stdout_lines[0] }}'
-
-    - name: Copy jenkins dir
-      synchronize:
-        src: .
-        dest: .
 
     - name: Cloning jenkins-docker repository
       git:
@@ -50,8 +60,6 @@
       shell: 'docker node update --label-add jenkins.jenkins-data=true {{ main_node }}'
 
     - name: Deploy jenkins
-      shell: 'docker stack deploy -c jenkins/docker-compose.yml jenkins'
+      shell: 'docker stack deploy -c /_data/apps/jenkins/docker-compose.yml jenkins'
       environment:
         - DOMAIN: '{{ jenkins_domain }}'
-      args:
-        chdir: $HOME

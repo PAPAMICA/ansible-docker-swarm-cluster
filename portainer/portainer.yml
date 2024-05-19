@@ -1,15 +1,24 @@
 - hosts: "{{ groups['masters'][0] }}"
 
   tasks:
-    - name: Copy portainer dir
-      command: rsync -a ./ ./ 
+    - name: Assurer que tous les répertoires du chemin /_data/apps/portainer existent
+      ansible.builtin.file:
+        path: /_data/apps/portainer
+        state: directory
+        mode: '0775'
+        recurse: yes
+      become: yes
+
+    - name: Copier le fichier docker-compose.yml vers le répertoire de portainer
+      ansible.builtin.copy:
+        src: ./docker-compose.yml
+        dest: /_data/apps/portainer/docker-compose.yml
+      become: yes
 
     - name: Add portainer label for main node
       shell: 'docker node update --label-add portainer.portainer-data=true {{ main_node }}'
 
     - name: Deploy portainer
-      shell: 'docker stack deploy -c portainer/docker-compose.yml portainer'
+      shell: 'docker stack deploy -c /_data/apps/portainer/docker-compose.yml portainer'
       environment:
         - DOMAIN: '{{ portainer_domain }}'
-      args:
-        chdir: $HOME
