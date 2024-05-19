@@ -2,4 +2,4 @@
 - import_playbook: cluster.yml
 - import_playbook: traefik/traefik.yml
 - import_playbook: portainer/portainer.yml
-- import_playbook: jenkins/jenkins.yml
+#- import_playbook: jenkins/jenkins.yml
