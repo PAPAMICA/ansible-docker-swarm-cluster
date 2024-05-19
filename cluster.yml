@@ -1,0 +1,37 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Initialize Docker Swarm on manager
+      shell: docker swarm init
+      when: inventory_hostname == groups['managers'][0]
+      register: swarm_init
+
+    - name: Get join token for managers
+      shell: docker swarm join-token manager -q
+      when: inventory_hostname == groups['managers'][0]
+      register: manager_join_token
+      changed_when: false
+
+    - name: Get join token for workers
+      shell: docker swarm join-token worker -q
+      when: inventory_hostname == groups['managers'][0]
+      register: worker_join_token
+      changed_when: false
+
+    - name: Set fact for manager join token
+      set_fact:
+        manager_join_token: "{{ manager_join_token.stdout }}"
+      when: inventory_hostname == groups['managers'][0]
+
+    - name: Set fact for worker join token
+      set_fact:
+        worker_join_token: "{{ worker_join_token.stdout }}"
+      when: inventory_hostname == groups['managers'][0]
+
+    - name: Join manager nodes to swarm
+      shell: echo "docker swarm join --token {{ manager_join_token }} {{ groups['managers'][0] }}:2377"
+      when: inventory_hostname != groups['managers'][0] and inventory_hostname in groups['managers']
+
+    - name: Join worker nodes to swarm
+      shell: docker swarm join --token {{ worker_join_token }} {{ groups['managers'][0] }}:2377
+      when: inventory_hostname in groups['workers']

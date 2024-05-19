@@ -1,5 +1,0 @@
-- hosts: main
-  tasks:
-    - name: Initialize the cluster using docker swarm
-      docker_swarm:
-        state: present

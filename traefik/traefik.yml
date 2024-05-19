@@ -1,4 +1,4 @@
-- hosts: main
+- hosts: "{{ groups['managers'][0] }}"
 
   tasks:
     - name: Copy traefik dir
