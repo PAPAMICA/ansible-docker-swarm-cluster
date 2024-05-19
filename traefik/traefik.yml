@@ -1,10 +1,32 @@
-- hosts: "{{ groups['managers'][0] }}"
+- hosts: "{{ groups['masters'][0] }}"
 
   tasks:
+    - name: Ensure rsync is installed
+      apt:
+        name: rsync
+        state: present
+      become: yes
+
+    - name: Check if rsync is in PATH
+      command: which rsync
+      register: rsync_path
+
+    - name: Fail if rsync is not found
+      fail:
+        msg: "rsync executable not found in PATH."
+      when: rsync_path.stdout == ""
+
+    - name: Ensure rsync path is in environment PATH
+      environment:
+        PATH: "{{ rsync_path.stdout | dirname }}:{{ ansible_env.PATH }}"
+
     - name: Copy traefik dir
       synchronize:
         src: .
         dest: .
+      delegate_to: localhost
+      become: yes
+
 
     - name: Create hashed password
       shell: 'openssl passwd -apr1 {{ traefik_password }}'

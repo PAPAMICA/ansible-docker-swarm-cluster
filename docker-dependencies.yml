@@ -1,6 +1,12 @@
 - hosts: all
   become: yes
   tasks:
+    - name: Install required packages
+      apt:
+        name: ['apt-transport-https', 'ca-certificates', 'rsync', 'gnupg2', 'curl', 'software-properties-common']
+        state: present
+        update_cache: yes
+
     - name: Upgrade all packages to the latest version
       apt:
         name: '*'

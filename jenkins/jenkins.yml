@@ -1,4 +1,4 @@
-- hosts: "{{ groups['managers'][0] }}"
+- hosts: "{{ groups['masters'][0] }}"
 
   tasks:
     - name: Get docker group id
